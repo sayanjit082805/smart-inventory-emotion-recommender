@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Doritos Chips",
+    "category": "Snacks",
+    "emotion": "happy",
+    "image": "https://i.imgur.com/qW9aUzF.jpg",
+    "link": "https://www.walmart.com/ip/Doritos/123456"
+  },
+  {
+    "name": "Self-Help Book",
+    "category": "Books",
+    "emotion": "sad",
+    "image": "https://i.imgur.com/SelfHelpBook.jpg",
+    "link": "https://www.walmart.com/ip/Self-Help-Book/654321"
+  },
+  {
+    "name": "Stress Ball",
+    "category": "Wellness",
+    "emotion": "angry",
+    "image": "https://i.imgur.com/StressBall.jpg",
+    "link": "https://www.walmart.com/ip/Stress-Ball/111222"
+  }
+]
