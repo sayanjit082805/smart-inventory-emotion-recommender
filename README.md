@@ -16,5 +16,3 @@ This project integrates real-time facial emotion detection with product scanning
 - 🔗 Clickable Product Recommendations with Images  
 
 ---
-
-
