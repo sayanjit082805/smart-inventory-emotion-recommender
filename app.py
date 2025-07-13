@@ -41,6 +41,7 @@ def update_inventory(product_id, direction):
 st.set_page_config(page_title="🧠 Smart Inventory System", layout="wide")
 st.title("📦 Smart Inventory + Emotion Recommender")
 
+# Emotion Detection
 if st.button("🎭 Detect Emotion & Suggest Products"):
     cam = cv2.VideoCapture(0)
     ret, frame = cam.read()
@@ -56,11 +57,9 @@ if st.button("🎭 Detect Emotion & Suggest Products"):
 
                 st.markdown("### 🛍️ Recommended Products Based on Your Mood")
                 catalog = load_catalog()
-
-                # Filter by emotion only once
                 recommendations = [item for item in catalog if item["emotion"].lower() == emotion.lower()]
                 if recommendations:
-                    for idx, item in enumerate(recommendations):
+                    for item in recommendations:
                         with st.container():
                             col1, col2 = st.columns([1, 3])
                             with col1:
@@ -70,25 +69,35 @@ if st.button("🎭 Detect Emotion & Suggest Products"):
                                 st.caption(f"Category: _{item['category']}_")
                 else:
                     st.warning("No recommendations found for this emotion.")
-                break  # Show only one face's emotion
+                break
             except Exception as e:
                 st.error(f"Error: {e}")
     else:
         st.error("Failed to capture from camera.")
     cam.release()
 
-
 st.markdown("---")
 
-# 📸 Scan Products
-st.subheader("📸 Scan Product to Update Inventory")
-if st.button("📦 Start Product Scanning"):
-    cap = cv2.VideoCapture(0)
-    detected = []
+# --- Persistent State for Scanning ---
+if "scanning" not in st.session_state:
+    st.session_state.scanning = False
+if "detected" not in st.session_state:
+    st.session_state.detected = []
+if "cap" not in st.session_state:
+    st.session_state.cap = None
 
-    while True:
-        ret, frame = cap.read()
-        if not ret: break
+# Start scanning
+if st.button("📦 Start Product Scanning", key="start_scan") and not st.session_state.scanning:
+    st.session_state.cap = cv2.VideoCapture(0)
+    st.session_state.scanning = True
+    st.session_state.detected = []
+
+if st.session_state.scanning:
+    cap = st.session_state.cap
+    detected = st.session_state.detected
+
+    ret, frame = cap.read()
+    if ret:
         results = model.predict(frame, verbose=False)
         names = model.names
         classes = results[0].boxes.cls.cpu().numpy().astype(int)
@@ -106,15 +115,18 @@ if st.button("📦 Start Product Scanning"):
                         st.warning(f"⚠️ {name} not found. Add manually.")
 
         st.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB")
-        if st.button("🛑 Stop Scanning", key="stop_scan"):
-            break
+    else:
+        st.error("📷 Failed to read from camera.")
 
-    cap.release()
-    cv2.destroyAllWindows()
+    if st.button("🛑 Stop Scanning", key="stop_scan"):
+        cap.release()
+        cv2.destroyAllWindows()
+        st.session_state.scanning = False
+        st.session_state.cap = None
 
 st.markdown("---")
 
-# 📊 Inventory Dashboard
+# Inventory Overview
 st.subheader("📊 Inventory Overview")
 if st.button("🔁 Refresh"):
     st.rerun()
@@ -130,12 +142,12 @@ for pid, name, stock, cat, threshold in products:
 if low_stock:
     st.error(f"🚨 Low stock: {', '.join(low_stock)}")
 
-# 🛠️ Manual Stock Editor
+# Manual Update
 st.subheader("🛠️ Manual Stock Update")
 product_names = [p[1] for p in products]
 selected = st.selectbox("Select Product", product_names)
-
 pid = next((p[0] for p in products if p[1] == selected), None)
+
 col1, col2 = st.columns(2)
 with col1:
     if st.button("➕ Add 1"):
@@ -146,7 +158,7 @@ with col2:
         update_inventory(pid, "out")
         st.success(f"{selected} stock decreased")
 
-# 📜 Logs & Export
+# Logs
 st.subheader("📜 Recent Logs")
 logs = get_logs()
 log_df = pd.DataFrame(logs, columns=["Log ID", "Product ID", "In Time", "Out Time"])

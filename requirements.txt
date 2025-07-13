@@ -11,3 +11,4 @@ torch>=2.0.0
 torchvision>=0.15.0
 sqlite-utils>=3.31
 Pillow>=9.4.0
+Plotly.express>=0.4.1
